@@ -23,35 +23,6 @@ class Config:
     CHUNK_SIZE = 1500  # Maksymalny rozmiar fragmentu tekstu do analizy
     CHUNK_OVERLAP = 200  # Nakładanie się fragmentów dla zachowania kontekstu
 
-# Szablony promptów
-class Prompts:
-    ANALYSIS_TEMPLATE = """Jesteś asystentem analizy HVAC. Twoim zadaniem jest analizowanie dokumentacji technicznej HVAC oraz wyciąganie najważniejszych danych technicznych w sposób uproszczony i zrozumiały.
-
-    Przeanalizuj poniższą dokumentację i przedstaw wyniki w formie listy. Upewnij się, że uwzględnisz wszystkie istotne parametry, w tym:
-    - Typ i przeznaczenie układu
-    - Parametry techniczne centrali
-    - Parametry wentylatorów
-    - Parametry wymienników
-    - Parametry filtrów
-    - Parametry automatyki
-    - Certyfikaty i zgodności
-
-    Dokumentacja:
-    {input}
-
-    Wynik analizy (w formie listy z myślnikami):"""
-
-    FULL_ANALYSIS_QUERY = """
-    {doc_text}
-    
-    Proszę wyciągnąć i przedstawić wszystkie istotne dane techniczne w formie listy.
-    """
-
-    BRIEF_ANALYSIS_QUERY = """
-    {doc_text}
-    
-    Proszę wyodrębnić tylko najważniejsze parametry techniczne w formie krótkiej listy.
-    """
 
 class HVACParametersInput(BaseModel):
     """Inputs for HVAC parameter analysis"""
@@ -188,18 +159,9 @@ class HVACOptimizationTool(BaseTool):
         return template.format(text=text)
 
     async def _arun(self, text: str) -> str:
+        """Async version of the run method (not implemented)."""
         raise NotImplementedError("Async not supported")
 
-class HVACAnalysisTool(BaseTool):
-    name: str = "hvac_analysis"
-    description: str = "Analizuje parametry techniczne instalacji HVAC"
-    args_schema: Type[BaseModel] = HVACParametersInput
-
-    def _run(self, text: str) -> str:
-        return text
-
-    async def _arun(self, text: str) -> str:
-        raise NotImplementedError("Async not supported")
 
 class HVACAnalyzer:
     def __init__(self):
@@ -238,23 +200,26 @@ class HVACAnalyzer:
             HVACOptimizationTool()
         ]
         
-        template = """Answer the following questions as best you can. You have access to the following tools:
+        template = """
+        Answer the following questions as best you can. You have access to the following tools:
 
-{tools}
+        {tools}
 
-Use the following format:
+        Use the following format:
 
-Question: the input question you must answer
-Thought: you should always think about what to do
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
-Final Answer: the final answer to the original input question
+        Question: the input question you must answer
+        Thought: you should always think about what to do
+        Action: the action to take, should be one of [{tool_names}]
+        Action Input: the input to the action
+        Observation: the result of the action
+        ... (this Thought/Action/Action Input/Observation can repeat N times)
+        Thought: I now know the final answer
+        Final Answer: the final answer to the original input question
 
-Question: {input}
-{agent_scratchpad}"""
+        Question: {input}
+        {agent_scratchpad}
+        
+        """
 
         prompt = PromptTemplate(
             template=template,
