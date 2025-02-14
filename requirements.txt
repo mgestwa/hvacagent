@@ -1,0 +1,10 @@
+streamlit>=1.24.0
+pandas>=2.0.0
+python-dotenv>=1.0.0
+langchain>=0.0.200
+langchain-openai>=0.0.2
+PyMuPDF>=1.22.5  # for PDF processing
+PyPDF2>=3.0.0    # additional PDF support
+pydantic>=2.0.0
+typing-extensions>=4.5.0
+openai>=1.12.0   # for GPT-4 API access 

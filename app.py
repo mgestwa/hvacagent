@@ -12,6 +12,7 @@ from typing import Optional, Type, Any
 from pydantic import BaseModel, Field
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from pdf_processor import PDFProcessor  # Add this import at the top
 
 # Konfiguracja
 class Config:
@@ -169,6 +170,7 @@ class HVACAnalyzer:
         self.setup_streamlit()
         self.initialize_session_state()
         self.setup_llm_chain()
+        self.pdf_processor = PDFProcessor()  # Initialize PDF processor
 
     def setup_streamlit(self):
         st.set_page_config(
@@ -261,13 +263,39 @@ class HVACAnalyzer:
 
     def create_main_interface(self):
         st.title("🔧 Asystent Analizy HVAC")
-        st.write("Wprowadź dokumentację techniczną do analizy")
         
-        doc_text = st.text_area(
-            "Dokumentacja techniczna",
-            height=200,
-            placeholder="Wprowadź tekst dokumentacji do analizy..."
-        )
+        # Add tabs for different input methods
+        tab1, tab2 = st.tabs(["Tekst", "PDF"])
+        
+        with tab1:
+            st.write("Wprowadź dokumentację techniczną do analizy")
+            doc_text = st.text_area(
+                "Dokumentacja techniczna",
+                height=200,
+                placeholder="Wprowadź tekst dokumentacji do analizy..."
+            )
+        
+        with tab2:
+            st.write("Wgraj kartę techniczną w formacie PDF")
+            uploaded_file = st.file_uploader("Wybierz plik PDF", type=['pdf'])
+            if uploaded_file:
+                # Save the uploaded file temporarily
+                with open("temp.pdf", "wb") as f:
+                    f.write(uploaded_file.getvalue())
+                try:
+                    # Process the PDF
+                    result = self.pdf_processor.process_pdf("temp.pdf")
+                    st.write("### Wyniki analizy PDF:")
+                    st.json(result)
+                    doc_text = str(result)  # Convert result to string for further analysis
+                except Exception as e:
+                    st.error(f"Błąd podczas przetwarzania PDF: {str(e)}")
+                finally:
+                    # Clean up temporary file
+                    if os.path.exists("temp.pdf"):
+                        os.remove("temp.pdf")
+            else:
+                doc_text = ""
         
         col1, col2, col3 = st.columns(3)
         with col1:
